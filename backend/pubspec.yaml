@@ -1,0 +1,9 @@
+name: simple_note_backend
+description: A minimal Dart shelf backend for notes used by the frontend.
+environment:
+  sdk: '>=2.17.0 <4.0.0'
+dependencies:
+  shelf: ^1.4.0
+  shelf_router: ^1.0.0
+  path: ^1.8.2
+  json_annotation: ^4.7.0

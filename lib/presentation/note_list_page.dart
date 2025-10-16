@@ -80,10 +80,14 @@ class _NoteListPageState extends State<NoteListPage> {
                       }
                     });
                   } else {
+                    final bloc = context.read<NoteBloc>();
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => NoteDetailPage(note: n),
+                        builder: (context) => BlocProvider.value(
+                          value: bloc,
+                          child: NoteDetailPage(note: n),
+                        ),
                       ),
                     );
                   }
@@ -110,10 +114,11 @@ class _NoteListPageState extends State<NoteListPage> {
       }),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
+          final bloc = context.read<NoteBloc>();
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => NoteAddPage(),
+              builder: (context) => NoteAddPage(noteBloc: bloc),
             ),
           );
         },

@@ -5,10 +5,12 @@ import 'package:frontend/bloc/note_bloc.dart';
 import 'package:frontend/bloc/note_event.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/repository/note_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets('NoteListPage shows notes from bloc', (tester) async {
-    final repo = NoteRepository(baseUrl: 'http://invalid-host');
+  SharedPreferences.setMockInitialValues({});
+  final repo = NoteRepository(baseUrl: 'http://invalid-host', client: null);
 
     await tester.pumpWidget(MaterialApp(
       home: BlocProvider<NoteBloc>(

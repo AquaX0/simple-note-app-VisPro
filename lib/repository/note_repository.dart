@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../services/local_storage_service.dart';
 import '../models/note.dart';
 
 /// NoteRepository tries to contact a backend at [baseUrl].
@@ -11,9 +12,11 @@ class NoteRepository {
   final List<Note> _inMemory = [];
   int _nextId = 1;
   final http.Client? client;
+  final LocalStorageService storage;
 
   /// [client] can be injected for testing to avoid real network calls.
-  NoteRepository({this.baseUrl = 'http://localhost:8080', this.client});
+  NoteRepository({this.baseUrl = 'http://localhost:8080', this.client, LocalStorageService? storage}) : storage = storage ?? LocalStorageService();
+
 
   Future<List<Note>> fetchNotes() async {
     try {
@@ -26,6 +29,17 @@ class NoteRepository {
       // fallthrough to in-memory on non-200
     } catch (e) {
       // network/CORS error — fall back to in-memory
+    }
+    // If in-memory empty, try loading from storage service
+    if (_inMemory.isEmpty) {
+      final loaded = await storage.loadNotes();
+      if (loaded.isNotEmpty) {
+        _inMemory.addAll(loaded);
+        // ensure next id is higher than any stored id
+        for (var n in _inMemory) {
+          if (n.id >= _nextId) _nextId = n.id + 1;
+        }
+      }
     }
     // return a copy to avoid external mutation
     return List<Note>.from(_inMemory);
@@ -46,6 +60,7 @@ class NoteRepository {
     }
     final note = Note(id: _nextId++, title: title, body: body);
     _inMemory.add(note);
+    await storage.saveNotes(_inMemory);
     return note;
   }
 
@@ -59,6 +74,7 @@ class NoteRepository {
       // ignore and delete locally
     }
     _inMemory.removeWhere((n) => n.id == id);
+    await storage.saveNotes(_inMemory);
   }
 
   Future<Note> updateNote(int id, String title, String body) async {
@@ -76,11 +92,15 @@ class NoteRepository {
     if (index >= 0) {
       final updated = Note(id: id, title: title, body: body);
       _inMemory[index] = updated;
+      await storage.saveNotes(_inMemory);
       return updated;
     }
     // If not present locally, create new stub
     final newNote = Note(id: id == 0 ? _nextId++ : id, title: title, body: body);
     _inMemory.add(newNote);
+    await storage.saveNotes(_inMemory);
     return newNote;
   }
+
+  // Local persistence moved to LocalStorageService
 }

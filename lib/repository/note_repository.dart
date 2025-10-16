@@ -10,12 +10,15 @@ class NoteRepository {
   final String baseUrl;
   final List<Note> _inMemory = [];
   int _nextId = 1;
+  final http.Client? client;
 
-  NoteRepository({this.baseUrl = 'http://localhost:8080'});
+  /// [client] can be injected for testing to avoid real network calls.
+  NoteRepository({this.baseUrl = 'http://localhost:8080', this.client});
 
   Future<List<Note>> fetchNotes() async {
     try {
-      final res = await http.get(Uri.parse('$baseUrl/notes'));
+  final uri = Uri.parse('$baseUrl/notes');
+  final res = client != null ? await client!.get(uri) : await http.get(uri);
       if (res.statusCode == 200) {
         final List<dynamic> data = jsonDecode(res.body);
         return data.map((e) => Note.fromJson(e)).toList();
@@ -30,11 +33,10 @@ class NoteRepository {
 
   Future<Note> addNote(String title, String body) async {
     try {
-      final res = await http.post(
-        Uri.parse('$baseUrl/notes'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'title': title, 'body': body}),
-      );
+      final uri = Uri.parse('$baseUrl/notes');
+      final res = client != null
+          ? await client!.post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'title': title, 'body': body}))
+          : await http.post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'title': title, 'body': body}));
       if (res.statusCode == 201) {
         return Note.fromJson(jsonDecode(res.body));
       }
@@ -49,7 +51,8 @@ class NoteRepository {
 
   Future<void> deleteNote(int id) async {
     try {
-      final res = await http.delete(Uri.parse('$baseUrl/notes/$id'));
+  final uri = Uri.parse('$baseUrl/notes/$id');
+  final res = client != null ? await client!.delete(uri) : await http.delete(uri);
       if (res.statusCode == 204) return;
       // else fall through to in-memory
     } catch (e) {
@@ -60,11 +63,10 @@ class NoteRepository {
 
   Future<Note> updateNote(int id, String title, String body) async {
     try {
-      final res = await http.patch(
-        Uri.parse('$baseUrl/notes/$id'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'title': title, 'body': body}),
-      );
+      final uri = Uri.parse('$baseUrl/notes/$id');
+      final res = client != null
+          ? await client!.patch(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'title': title, 'body': body}))
+          : await http.patch(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'title': title, 'body': body}));
       if (res.statusCode == 200) return Note.fromJson(jsonDecode(res.body));
       // else fall through
     } catch (e) {

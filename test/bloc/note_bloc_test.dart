@@ -25,20 +25,19 @@ void main() {
       expect: () => [isA<NoteLoading>(), isA<NoteLoaded>()],
     );
 
-    blocTest<NoteBloc, NoteState>(
-      'adds new note when AddNoteEvent is called and state was loaded',
-      build: () {
-        when(() => repo.addNote('a', 'b')).thenAnswer((_) async => Note(id: 1, title: 'a', body: 'b'));
-        // initial fetch returns empty list
-        when(() => repo.fetchNotes()).thenAnswer((_) async => []);
-        return NoteBloc(repo: repo);
-      },
-      act: (b) async {
-        b.add(LoadNotes());
-        await Future.delayed(Duration.zero);
-        b.add(AddNoteEvent('a', 'b'));
-      },
-      expect: () => [isA<NoteLoading>(), isA<NoteLoaded>(), isA<NoteLoaded>()],
-    );
+    test('adds new note when AddNoteEvent is called and state was loaded', () async {
+      when(() => repo.addNote('a', 'b')).thenAnswer((_) async => Note(id: 1, title: 'a', body: 'b'));
+      when(() => repo.fetchNotes()).thenAnswer((_) async => []);
+
+      final bloc = NoteBloc(repo: repo);
+      bloc.add(LoadNotes());
+      await Future.delayed(Duration.zero);
+      bloc.add(AddNoteEvent('a', 'b'));
+
+      // Wait until we observe a NoteLoaded that contains our new note
+      final loaded = await bloc.stream.firstWhere((s) => s is NoteLoaded && (s as NoteLoaded).notes.any((n) => n.title == 'a' && n.body == 'b'));
+      expect(loaded, isA<NoteLoaded>());
+      expect((loaded as NoteLoaded).notes.any((n) => n.title == 'a' && n.body == 'b'), isTrue);
+    });
   });
 }

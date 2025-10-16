@@ -37,6 +37,15 @@ class _NoteListPageState extends State<NoteListPage> {
 
   @override
   Widget build(BuildContext context) {
+    PageRouteBuilder _fastRoute(Widget child) => PageRouteBuilder(
+          pageBuilder: (context, animation, secondary) => child,
+          transitionDuration: Duration(milliseconds: 120),
+          reverseTransitionDuration: Duration(milliseconds: 100),
+          transitionsBuilder: (context, animation, secondary, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        );
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Note List'),
@@ -81,15 +90,7 @@ class _NoteListPageState extends State<NoteListPage> {
                     });
                   } else {
                     final bloc = context.read<NoteBloc>();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => BlocProvider.value(
-                          value: bloc,
-                          child: NoteDetailPage(note: n),
-                        ),
-                      ),
-                    );
+                    Navigator.push(context, _fastRoute(BlocProvider.value(value: bloc, child: NoteDetailPage(note: n))));
                   }
                 },
                 leading: isSelectionMode
@@ -115,12 +116,7 @@ class _NoteListPageState extends State<NoteListPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           final bloc = context.read<NoteBloc>();
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => NoteAddPage(noteBloc: bloc),
-            ),
-          );
+          Navigator.push(context, _fastRoute(NoteAddPage(noteBloc: bloc)));
         },
         child: Icon(Icons.add),
       ),

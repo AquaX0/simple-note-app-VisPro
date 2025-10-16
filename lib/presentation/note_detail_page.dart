@@ -48,11 +48,11 @@ class NoteDetailPage extends StatelessWidget {
                   final bloc = BlocProvider.of<NoteBloc>(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => BlocProvider.value(
-                        value: bloc,
-                        child: NoteEditPage(note: current!),
-                      ),
+                    PageRouteBuilder(
+                      pageBuilder: (context, a, s) => BlocProvider.value(value: bloc, child: NoteEditPage(note: current!)),
+                      transitionDuration: Duration(milliseconds: 120),
+                      reverseTransitionDuration: Duration(milliseconds: 100),
+                      transitionsBuilder: (context, animation, secondary, child) => FadeTransition(opacity: animation, child: child),
                     ),
                   );
                 },
